@@ -14,16 +14,20 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
 
-// Rota para o dashboard
+// Serve os arquivos estáticos a partir da pasta 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+// Serve o bundle compilado do React a partir da pasta 'dist'
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Rota para o dashboard, que agora serve o HTML de entrada para o React
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// Rota para a página de cadastro
+// Rota para a página de cadastro, que também será um componente React
 app.get('/cadastro', (req, res) => {
-    res.sendFile(path.join(__dirname, 'cadastro.html'));
+    res.sendFile(path.join(__dirname, 'public', 'cadastro.html'));
 });
 
 // Usa a rota para processar o texto, buscar gastos e o cadastro manual

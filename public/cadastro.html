@@ -103,9 +103,10 @@
                     if (response.ok) {
                         mensagemStatus.textContent = result.message || 'Gasto salvo com sucesso!';
                         mensagemStatus.classList.add('text-green-400');
-                        form.reset(); // Limpa o formulário
-                        // Adiciona a data de hoje novamente após o reset
-                        dataInput.value = `${year}-${month}-${day}`;
+                        // Redireciona para a página do dashboard após 2 segundos
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 2000);
                     } else {
                         mensagemStatus.textContent = result.error || 'Ocorreu um erro ao salvar o gasto.';
                         mensagemStatus.classList.add('text-red-400');

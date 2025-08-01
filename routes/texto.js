@@ -49,23 +49,23 @@ router.post('/', async (req, res) => {
 // Rota GET para buscar todos os gastos para o dashboard
 router.get('/gastos', async (req, res) => {
     try {
-        // Extrai os parâmetros de query para mês e ano
         const { mes, ano } = req.query;
 
-        let query = supabase
-            .from('gastos')
-            .select('*')
-            .order('data', { ascending: false })
-            .order('id', { ascending: false });
+        let query = supabase.from('gastos').select('*');
 
-        // Adiciona um filtro de mês e ano se os parâmetros existirem
         if (mes && ano) {
             const dataInicial = `${ano}-${String(mes).padStart(2, '0')}-01`;
             const dataFinal = `${ano}-${String(mes).padStart(2, '0')}-${new Date(ano, mes, 0).getDate()}`;
             query = query.gte('data', dataInicial).lte('data', dataFinal);
         }
+        
+        // Adiciona a ordenação após a lógica de filtro
+        query = query.order('data', { ascending: false }).order('id', { ascending: false });
 
+        // Adiciona um log para ver o resultado da consulta no terminal
+        console.log('Executando consulta no Supabase...');
         const { data, error } = await query;
+        console.log('Resultado da consulta:', data);
 
         if (error) {
             console.error('Erro ao buscar gastos no Supabase:', error);
