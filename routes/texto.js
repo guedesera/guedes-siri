@@ -21,9 +21,13 @@ router.post('/', async (req, res) => {
     try {
         const { descricao, valor, categoria } = await extractFinancialData(conteudo);
 
+        // Obter a data atual no formato YYYY-MM-DD
+        const dataAtual = new Date().toISOString().split('T')[0];
+
+        // Insere os dados, incluindo a data, na tabela 'gastos' do Supabase
         const { data, error } = await supabase
             .from('gastos')
-            .insert({ descricao, valor, categoria });
+            .insert({ data: dataAtual, descricao, valor, categoria });
 
         if (error) {
             console.error('Erro ao inserir dados no Supabase:', error);
@@ -32,7 +36,7 @@ router.post('/', async (req, res) => {
 
         return res.status(201).json({
             message: 'Gasto registrado com sucesso!',
-            data: { descricao, valor, categoria }
+            data: { data: dataAtual, descricao, valor, categoria }
         });
     } catch (error) {
         console.error('Erro no processamento da requisição:', error.message);
