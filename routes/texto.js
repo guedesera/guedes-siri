@@ -1,5 +1,6 @@
 // routes/texto.js
 // Rota para o endpoint que recebe o texto da Siri e insere no Supabase
+// Nova rota para o dashboard que busca os gastos no Supabase
 
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
@@ -11,6 +12,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Rota POST para processar o texto e inserir gastos
 router.post('/', async (req, res) => {
     const { conteudo } = req.body;
 
@@ -41,6 +43,39 @@ router.post('/', async (req, res) => {
     } catch (error) {
         console.error('Erro no processamento da requisição:', error.message);
         return res.status(500).json({ error: 'Erro ao processar a frase. Por favor, tente novamente.' });
+    }
+});
+
+// Nova rota GET para buscar todos os gastos para o dashboard
+router.get('/gastos', async (req, res) => {
+    try {
+        // Extrai os parâmetros de query para mês e ano
+        const { mes, ano } = req.query;
+
+        let query = supabase
+            .from('gastos')
+            .select('*')
+            .order('data', { ascending: false })
+            .order('id', { ascending: false });
+
+        // Adiciona um filtro de mês e ano se os parâmetros existirem
+        if (mes && ano) {
+            const dataInicial = `${ano}-${String(mes).padStart(2, '0')}-01`;
+            const dataFinal = `${ano}-${String(mes).padStart(2, '0')}-${new Date(ano, mes, 0).getDate()}`;
+            query = query.gte('data', dataInicial).lte('data', dataFinal);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Erro ao buscar gastos no Supabase:', error);
+            return res.status(500).json({ error: 'Erro ao buscar os gastos.' });
+        }
+
+        return res.status(200).json(data);
+    } catch (error) {
+        console.error('Erro ao buscar dados para o dashboard:', error.message);
+        return res.status(500).json({ error: 'Erro interno do servidor.' });
     }
 });
 
