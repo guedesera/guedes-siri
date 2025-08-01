@@ -12,7 +12,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Rota POST para processar o texto e inserir gastos
+// Rota POST para processar o texto e inserir gastos via Siri
 router.post('/', async (req, res) => {
     const { conteudo } = req.body;
 
@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Nova rota GET para buscar todos os gastos para o dashboard
+// Rota GET para buscar todos os gastos para o dashboard
 router.get('/gastos', async (req, res) => {
     try {
         // Extrai os parâmetros de query para mês e ano
@@ -78,5 +78,36 @@ router.get('/gastos', async (req, res) => {
         return res.status(500).json({ error: 'Erro interno do servidor.' });
     }
 });
+
+// Nova rota POST para cadastrar gastos via formulário (sem o Gemini)
+router.post('/cadastro', async (req, res) => {
+    const { data, descricao, valor, categoria } = req.body;
+
+    // Validação básica dos campos
+    if (!data || !descricao || !valor || !categoria) {
+        return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    try {
+        // Insere os dados diretamente na tabela 'gastos' do Supabase
+        const { data: newGasto, error } = await supabase
+            .from('gastos')
+            .insert({ data, descricao, valor, categoria });
+
+        if (error) {
+            console.error('Erro ao inserir dados do formulário:', error);
+            return res.status(500).json({ error: 'Erro ao salvar o gasto no banco de dados.' });
+        }
+
+        return res.status(201).json({
+            message: 'Gasto registrado com sucesso!',
+            data: newGasto
+        });
+    } catch (error) {
+        console.error('Erro no processamento da requisição de cadastro:', error.message);
+        return res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+});
+
 
 module.exports = router;
