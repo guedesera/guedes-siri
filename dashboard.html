@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Gastos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Cor de fundo escura */
+            color: #e2e8f0; /* Cor do texto claro */
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold mb-6 text-center text-white">Acompanhamento de Gastos</h1>
+        
+        <!-- Painel de resumo -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div class="bg-gray-700 p-4 rounded-lg shadow-md">
+                <p class="text-sm font-semibold text-gray-400">Total de Gastos</p>
+                <p id="total-gastos" class="text-2xl font-bold text-red-400 mt-1">R$ 0,00</p>
+            </div>
+            <div class="bg-gray-700 p-4 rounded-lg shadow-md">
+                <p class="text-sm font-semibold text-gray-400">Número de Gastos</p>
+                <p id="num-gastos" class="text-2xl font-bold text-white mt-1">0</p>
+            </div>
+            <div class="bg-gray-700 p-4 rounded-lg shadow-md">
+                <p class="text-sm font-semibold text-gray-400">Média de Gastos</p>
+                <p id="media-gastos" class="text-2xl font-bold text-white mt-1">R$ 0,00</p>
+            </div>
+        </div>
+
+        <!-- Tabela de gastos -->
+        <div class="overflow-x-auto bg-gray-700 rounded-lg shadow-md">
+            <table class="min-w-full table-auto">
+                <thead class="bg-gray-600 text-gray-300">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Data</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Descrição</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Categoria</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-gastos" class="divide-y divide-gray-600">
+                    <!-- Linhas de gastos serão inseridas aqui via JavaScript -->
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-400">Carregando gastos...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const totalGastosEl = document.getElementById('total-gastos');
+            const numGastosEl = document.getElementById('num-gastos');
+            const mediaGastosEl = document.getElementById('media-gastos');
+            const tabelaGastosEl = document.getElementById('tabela-gastos');
+
+            const API_URL = '/texto/gastos';
+
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            };
+
+            const formatDate = (dateString) => {
+                const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString('pt-BR', options);
+            };
+
+            const fetchData = async () => {
+                try {
+                    const response = await fetch(API_URL);
+                    if (!response.ok) {
+                        throw new Error('Falha ao buscar os dados.');
+                    }
+                    const gastos = await response.json();
+                    
+                    renderGastos(gastos);
+
+                } catch (error) {
+                    console.error('Erro:', error);
+                    tabelaGastosEl.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-red-400">Erro ao carregar gastos.</td></tr>`;
+                }
+            };
+
+            const renderGastos = (gastos) => {
+                if (gastos.length === 0) {
+                    tabelaGastosEl.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-400">Nenhum gasto registrado.</td></tr>`;
+                    totalGastosEl.textContent = formatCurrency(0);
+                    numGastosEl.textContent = 0;
+                    mediaGastosEl.textContent = formatCurrency(0);
+                    return;
+                }
+
+                // Cálculo das métricas
+                const total = gastos.reduce((sum, gasto) => sum + parseFloat(gasto.valor), 0);
+                const media = total / gastos.length;
+
+                totalGastosEl.textContent = formatCurrency(total);
+                numGastosEl.textContent = gastos.length;
+                mediaGastosEl.textContent = formatCurrency(media);
+
+                // Renderização da tabela
+                tabelaGastosEl.innerHTML = '';
+                gastos.forEach(gasto => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-600 transition-colors duration-200';
+                    row.innerHTML = `
+                        <td class="px-4 py-3">${formatDate(gasto.data)}</td>
+                        <td class="px-4 py-3">${gasto.descricao}</td>
+                        <td class="px-4 py-3">${gasto.categoria}</td>
+                        <td class="px-4 py-3 font-semibold text-red-300">${formatCurrency(gasto.valor)}</td>
+                    `;
+                    tabelaGastosEl.appendChild(row);
+                });
+            };
+
+            fetchData();
+        });
+    </script>
+</body>
+</html>
